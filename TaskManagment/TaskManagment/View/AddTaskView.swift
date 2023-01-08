@@ -8,8 +8,10 @@
 import SwiftUI
 
 struct AddTaskView: View {
+    @Environment(\.managedObjectContext) var viewContext
+    @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \Tasks.id, ascending: true)]) private var items: FetchedResults<Tasks>
     // Callback
-    var onAdd: (Task)->()
+//    var onAdd: (Task)->()
     //View Properties
     @Environment(\.dismiss) private var dismiss
     @State private var taskName: String = ""
@@ -17,7 +19,7 @@ struct AddTaskView: View {
     @State private var taskDate: Date = .init()
     @State private var taskCategory: Category = .general
     //Category Animation
-    @State private var animateColor: Color = Category.general.color
+    @State private var animateColor: Color = Color(Category.general.color)
     @State private var animate: Bool = false
     var body: some View {
         VStack(alignment: .leading) {
@@ -99,7 +101,7 @@ struct AddTaskView: View {
             .padding(15)
             .background {
                 ZStack{
-                    taskCategory.color
+                    Color(taskCategory.color)
                     
                     GeometryReader{
                         let size = $0.size
@@ -138,13 +140,13 @@ struct AddTaskView: View {
                             .padding(.vertical,5)
                             .background {
                                 RoundedRectangle(cornerRadius: 5, style: .continuous)
-                                    .fill(category.color.opacity(0.3))
+                                    .fill(Color(category.color).opacity(0.3))
                             }
-                            .foregroundColor(category.color)
+                            .foregroundColor(Color(category.color))
                             .contentShape(Rectangle())
                             .onTapGesture {
                                 guard !animate else{return}
-                                animateColor = category.color
+                                animateColor = Color(category.color)
                                 withAnimation(.interactiveSpring(response: 0.7, dampingFraction: 1, blendDuration: 1)){
                                     animate = true
                                 }
@@ -160,8 +162,23 @@ struct AddTaskView: View {
                 
                 Button {
                     //Creating Task
-                    let task = Task(dateAdded: taskDate, taskName: taskName, taskDescription: taskDescription, taskCategory: taskCategory)
-                    onAdd(task)
+//                    let task = Task(dateAdded: taskDate, taskName: taskName, taskDescription: taskDescription, taskCategory: taskCategory)
+//                    onAdd(task)
+                    let newItem = Tasks(context: viewContext)
+                    newItem.taskCategory = taskCategory.color
+                    newItem.taskName = taskName
+                    newItem.taskDescription = taskDescription
+                    newItem.dateAdded = taskDate
+                    newItem.id = UUID()
+                    print(newItem)
+                    
+                    do{
+                        try viewContext.save()
+                    } catch{
+                        let nsError = error as NSError
+                        fatalError("\(nsError), \(nsError.userInfo)")
+                    }
+                    
                     dismiss()
                 } label: {
                     Text("Create Task")
@@ -193,8 +210,9 @@ struct AddTaskView: View {
 
 struct AddTaskView_Previews: PreviewProvider {
     static var previews: some View {
-        AddTaskView{task in
-            
-        }
+//        AddTaskView{task in
+//
+//        }
+        AddTaskView()
     }
 }

@@ -16,6 +16,33 @@ enum Category: String,CaseIterable{
     case challenge = "Challenge"
     case coding = "Coding"
     
+    var color: String{
+        switch self {
+        case .general:
+            return "Gray"
+        case .bug:
+            return "Green"
+        case .idea:
+            return "Pink"
+        case .modifiers:
+            return "Blue"
+        case .challenge:
+            return "Orange"
+        case .coding:
+            return "Brown"
+        }
+    }
+}
+
+@objc
+public enum Categorys: Int16{
+    case general
+    case bug
+    case idea
+    case modifiers
+    case challenge
+    case coding
+    
     var color: Color{
         switch self {
         case .general:

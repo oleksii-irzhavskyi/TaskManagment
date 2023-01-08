@@ -6,8 +6,11 @@
 //
 
 import SwiftUI
+import CoreData
 
 struct Home: View {
+    @Environment(\.managedObjectContext) var viewContext
+    @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \Tasks.id, ascending: true)]) private var items: FetchedResults<Tasks>
     //View Properties
     @State private var currentDay: Date = .init()
     @State private var tasks: [Task] = sampleTasks
@@ -21,10 +24,7 @@ struct Home: View {
             HeaderView()
         }
         .fullScreenCover(isPresented: $addNewTask) {
-            AddTaskView { task in
-                // Add it to tasks
-                tasks.append(task)
-            }
+            AddTaskView ()
         }
     }
     
@@ -56,7 +56,8 @@ struct Home: View {
             
             //Filtering Tasks
             let calendar = Calendar.current
-            let filteredTasks = tasks.filter{
+            //tasks to items
+            let filteredTasks = items.filter{
                 if let hour = calendar.dateComponents([.hour], from: date).hour,
                    let taskHour = calendar.dateComponents([.hour], from: $0.dateAdded).hour,
                    hour == taskHour && calendar.isDate($0.dateAdded, inSameDayAs: currentDay){
@@ -85,16 +86,17 @@ struct Home: View {
     
     //Task Row
     @ViewBuilder
-    func TaskRow(_ task: Task)->some View{
+    //task to tasks
+    func TaskRow(_ task: Tasks)->some View{
         VStack(alignment: .leading, spacing: 8) {
             Text(task.taskName.uppercased())
                 .ubuntu(16, .regular)
-                .foregroundColor(task.taskCategory.color)
+                .foregroundColor(Color(task.taskCategory))
             
             if task.taskDescription != ""{
                 Text(task.taskDescription)
                     .ubuntu(16, .light)
-                    .foregroundColor(task.taskCategory.color.opacity(0.8))
+                    .foregroundColor(Color(task.taskCategory).opacity(0.8))
             }
         }
         .hAlign(.leading)
@@ -102,11 +104,11 @@ struct Home: View {
         .background{
             ZStack(alignment: .leading) {
                 Rectangle()
-                    .fill(task.taskCategory.color)
+                    .fill(Color(task.taskCategory))
                     .frame(width: 4)
                 
                 Rectangle()
-                    .fill(task.taskCategory.color.opacity(0.25))
+                    .fill(Color(task.taskCategory).opacity(0.25))
             }
         }
     }
@@ -243,7 +245,7 @@ extension Calendar{
     var currentWeek: [WeekDay]{
         guard let firstWeekDay = self.dateInterval(of: .weekOfMonth, for: Date())?.start else{return []}
         var week: [WeekDay] = []
-        for index in 1..<8{
+        for index in 0..<7{
             if let day = self.date(byAdding: .day, value: index, to: firstWeekDay){
                 let weekDaySymbol: String = day.toString("EEEE")
                 let isToday = self.isDateInToday(day)
